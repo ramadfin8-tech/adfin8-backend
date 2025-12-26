@@ -91,7 +91,23 @@ if (req.method === "GET" && req.url === "/attendance") {
   }
   return;
 }
-  // ❌ ALL OTHERS
+ // ❌ ALL OTHERS
+  // GET /stats -> dashboard numbers
+if (req.method === "GET" && req.url === "/stats") {
+  const attendance = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+  const totalEmployees = 25; // temporary value
+  const presentToday = attendance.length;
+  const absentToday = totalEmployees - presentToday;
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({
+    totalEmployees,
+    presentToday,
+    absentToday
+  }));
+  return;
+}
   res.writeHead(404);
   res.end("Not Found");
 });
@@ -99,3 +115,4 @@ if (req.method === "GET" && req.url === "/attendance") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
