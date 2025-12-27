@@ -19,16 +19,60 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ✅ POST /attendance
-  if (req.method === "POST" && req.url === "/attendance") {
+   // ✅ POST /attendance -> mark attendance per employee
+if (req.method === "POST" && req.url === "/attendance") {
+  let body = "";
 
-    let body = "";
+  req.on("data", chunk => body += chunk.toString());
 
-    req.on("data", chunk => {
-      body += chunk.toString();
+  req.on("end", () => {
+    if (!body) {
+      res.writeHead(400);
+      res.end("Empty body");
+      return;
+    }
+
+    const data = JSON.parse(body);
+
+    const employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
+    const attendance = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    // Check employee exists
+    const employee = employees.find(e => e.id === data.employeeId);
+    if (!employee) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Employee not found ❌" }));
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Check already marked today
+    const alreadyMarked = attendance.find(
+      a => a.employeeId === data.employeeId && a.date === today
+    );
+
+    if (alreadyMarked) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Attendance already marked today ⚠️" }));
+      return;
+    }
+
+    attendance.push({
+      employeeId: data.employeeId,
+      name: employee.name,
+      date: today,
+      time: new Date().toLocaleTimeString()
     });
 
-    req.on("end", () => {
+    fs.writeFileSync(filePath, JSON.stringify(attendance, null, 2));
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Attendance marked successfully ✅" }));
+  });
+
+  return;
+}
 
       // ✅ BODY VALIDATION (KEY FIX)
       if (!body || body.trim() === "") {
@@ -179,6 +223,7 @@ if (req.method === "GET" && req.url === "/employees") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
 
 
 
