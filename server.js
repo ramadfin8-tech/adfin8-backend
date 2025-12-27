@@ -97,7 +97,24 @@ if (req.method === "GET" && req.url === "/attendance") {
 if (req.method === "GET" && req.url === "/stats") {
   const attendance = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-  const totalEmployees = 25; // temporary value
+  // GET /stats -> dashboard numbers
+if (req.method === "GET" && req.url === "/stats") {
+  const attendance = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
+
+  const totalEmployees = employees.length;
+  const presentToday = attendance.length;
+  const absentToday = totalEmployees - presentToday;
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({
+    totalEmployees,
+    presentToday,
+    absentToday
+  }));
+  return;
+}
+
   const presentToday = attendance.length;
   const absentToday = totalEmployees - presentToday;
 
@@ -162,6 +179,7 @@ if (req.method === "GET" && req.url === "/employees") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
 
 
 
