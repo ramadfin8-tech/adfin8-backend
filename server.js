@@ -103,9 +103,9 @@ if (req.method === "GET" && req.url === "/stats") {
   const employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
 
   const totalEmployees = employees.length;
-  const presentToday = attendance.length;
-  const absentToday = totalEmployees - presentToday;
-
+  const presentToday = Math.min(attendance.length, totalEmployees);
+const absentToday = totalEmployees - presentToday;
+  
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({
     totalEmployees,
@@ -179,6 +179,7 @@ if (req.method === "GET" && req.url === "/employees") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
 
 
 
