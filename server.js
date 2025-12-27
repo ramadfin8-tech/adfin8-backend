@@ -215,6 +215,37 @@ if (req.method === "GET" && req.url === "/employees") {
   res.end(JSON.stringify(employees));
   return;
 }
+// GET /reports?month=YYYY-MM -> monthly attendance report
+if (req.method === "GET" && req.url.startsWith("/reports")) {
+  const urlParts = new URL(req.url, `http://${req.headers.host}`);
+  const month = urlParts.searchParams.get("month");
+
+  if (!month) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Month is required (YYYY-MM)" }));
+    return;
+  }
+
+  const attendance = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
+
+  const report = employees.map(emp => {
+    const presentDays = attendance.filter(a =>
+      a.employeeId === emp.id && a.date.startsWith(month)
+    ).length;
+
+    return {
+      employeeId: emp.id,
+      name: emp.name,
+      role: emp.role,
+      presentDays
+    };
+  });
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(report));
+  return;
+}
 
   res.writeHead(404);
   res.end("Not Found");
@@ -223,6 +254,7 @@ if (req.method === "GET" && req.url === "/employees") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
 
 
 
