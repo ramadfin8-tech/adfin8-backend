@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const filePath = path.join(__dirname, "attendance.json");
+const employeeFile = path.join(__dirname, "employees.json");
 
 const server = http.createServer((req, res) => {
 
@@ -108,6 +109,52 @@ if (req.method === "GET" && req.url === "/stats") {
   }));
   return;
 }
+  // POST /employees -> add employee
+if (req.method === "POST" && req.url === "/employees") {
+  let body = "";
+
+  req.on("data", chunk => body += chunk.toString());
+
+  req.on("end", () => {
+    if (!body) {
+      res.writeHead(400);
+      res.end("Empty body");
+      return;
+    }
+
+    const data = JSON.parse(body);
+
+    let employees = [];
+    try {
+      employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
+    } catch {}
+
+    const newEmployee = {
+      id: Date.now(),
+      name: data.name,
+      role: data.role
+    };
+
+    employees.push(newEmployee);
+    fs.writeFileSync(employeeFile, JSON.stringify(employees, null, 2));
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      message: "Employee added successfully ✅"
+    }));
+  });
+
+  return;
+}
+
+// GET /employees -> list employees
+if (req.method === "GET" && req.url === "/employees") {
+  const employees = JSON.parse(fs.readFileSync(employeeFile, "utf8"));
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(employees));
+  return;
+}
+
   res.writeHead(404);
   res.end("Not Found");
 });
@@ -115,5 +162,6 @@ if (req.method === "GET" && req.url === "/stats") {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
+
 
 
